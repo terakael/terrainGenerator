@@ -1,0 +1,122 @@
+{
+    "ocean": {
+        "color": "#0000ff",
+        "height": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 0.5,
+            "decayCurve": 0.75
+        },
+        "humidity": {
+            "idealPosition": 0.5,
+            "anchor": 0.5,
+            "variance": 1,
+            "decayCurve": 1
+        },
+        "tide": {
+            "idealPosition": 1,
+            "anchor": 1,
+            "variance": 2,
+            "decayCurve": 1
+        }
+    },
+    "water": {
+        "color": "#1f20b7",
+        "height": {
+            "idealPosition": -0.5,
+            "anchor": 0.5,
+            "variance": 1,
+            "decayCurve": 1
+        },
+        "humidity": {
+            "idealPosition": 1,
+            "anchor": 1,
+            "variance": 1,
+            "decayCurve": 1
+        },
+        "tide": {
+            "idealPosition": 1,
+            "anchor": 1,
+            "variance": 1,
+            "decayCurve": 0.5
+        }
+    },
+    "sand": {
+        "color": "#bdb15e",
+        "height": {
+            "idealPosition": -0.2,
+            "anchor": 0.5,
+            "variance": 0.6,
+            "decayCurve": 1
+        },
+        "humidity": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 1,
+            "decayCurve": 2 
+        },
+        "tide": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 1.5,
+            "decayCurve": 0.5
+        }
+    },
+    "mud": {
+        "color": "#524113",
+        "height": {
+            "idealPosition": -0.25,
+            "anchor": 0.5,
+            "variance": 0.6,
+            "decayCurve": 1.25
+        },
+        "humidity": {
+            "idealPosition": 1,
+            "anchor": 1,
+            "variance": 0.6,
+            "decayCurve": 1.5
+        },
+        "tide": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 1.5,
+            "decayCurve": 1
+        }
+    },
+    "grass": {
+        "color": "#2d6512",
+        "height": {
+            "idealPosition": 0,
+            "anchor": 0.25,
+            "variance": 1,
+            "decayCurve": 1
+        },
+        "humidity": {
+            "idealPosition": 0.25,
+            "anchor": 0.5,
+            "variance": 2,
+            "decayCurve": 0.5
+        },
+        "tide": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 2,
+            "decayCurve": 0.5
+        }
+    },
+    "forest": {
+        "color": "#183f05",
+        "height": {
+            "idealPosition": 0.5,
+            "anchor": 0.5,
+            "variance": 1,
+            "decayCurve": 1
+        },
+        "humidity": {
+            "idealPosition": 0,
+            "anchor": 0.5,
+            "variance": 2,
+            "decayCurve": 0.5
+        }
+    }
+}

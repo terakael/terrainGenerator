@@ -1,0 +1,22 @@
+{
+    "ocean": {
+        "height": {
+            "idealPosition": -1,
+            "anchor": 0,
+            "variance": 0.25,
+            "decayCurve": 0.75
+        },
+        "humidity": {
+            "idealPosition": 0,
+            "anchor": 0.5,
+            "variance": 2,
+            "decayCurve": 1
+        },
+        "tideInfluence": {
+            "idealPosition": 1,
+            "anchor": 1,
+            "variance": 2,
+            "decayCurve": 1
+        }
+    }
+}
