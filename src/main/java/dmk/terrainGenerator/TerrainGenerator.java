@@ -21,7 +21,7 @@ public class TerrainGenerator {
 	private int seed;
 	public TerrainGenerator(int seed) throws IOException {
 		this.seed = seed;
-//		loadLandProfiles();
+		loadLandProfiles();
 	}
 	
 	private final double featureSize = 256;
@@ -32,7 +32,7 @@ public class TerrainGenerator {
 	@Getter
 	@RequiredArgsConstructor
 	private enum Land {
-		OCEAN(0x0000ff),
+		OCEAN(0x000066),
 	    WATER(0x1f20b7),
 	    SWAMP_WATER(0x00523d),
 	    LAVA(0x990000),
@@ -60,7 +60,7 @@ public class TerrainGenerator {
 	}
 	
 	private enum RenderMode {
-		COLOR_ONLY, NOISE_ONLY, OVERLAY;
+		COLOR_ONLY, NOISE_ONLY;//, OVERLAY;
 		
 		private static RenderMode[] vals = values();
 	    public RenderMode next()
@@ -83,26 +83,27 @@ public class TerrainGenerator {
 				final int localX = x - left;
 				final int localY = y - top;
 				
-				double tide = -curve(
-						avg(getNoise(seed + 4, scale, 1000, 3, x, y),
-							getNoise(seed + 5, scale, 3000, 3, x, y),
-							getNoise(seed + 11, scale, 500, 3, x, y)), 1.5);
+//				double tide = -curve(
+//						avg(getNoise(seed + 4, scale, 1000, 3, x, y),
+//							getNoise(seed + 5, scale, 3000, 3, x, y),
+//							getNoise(seed + 11, scale, 500, 3, x, y)), 1.5);
 				
-				double h = curve(getElevation(seed, scale, x, y), 1);
+				double elevation = getElevation(seed, scale, x, y);
 //				double humidity = curve(getElevation(seed + 1, scale, x, y), 1.5);
 				
 				double humidity = avg(
-						getNoise(seed + 7, scale, 3000, 3, x, y),
-						getNoise(seed + 8, scale, 1000, 5, x, y));
-//				humidity = curve((-h + (humidity * 4)) / 5, 1);
-				humidity = curve(avg(-h * 0.2, humidity), 2);
+						getNoise(seed + 7, scale, 1200, 1, x, y),
+						getNoise(seed + 7, scale, 600, 1, x, y),
+						getNoise(seed + 8, scale, 1200, 1, x, y));
+				humidity = curve(humidity, 2);
 
-				double volcanicActivity = -curve(
-						avg(-h, 
-							getNoise(seed + 9, scale, 2000, 3, x, y),
-							getNoise(seed + 10, scale, 8000, 3, x, y)), 1);
+				double volcanicActivity = curve(
+						avg(getNoise(seed + 9, scale, 1000, 1, x, y),
+							getNoise(seed + 10, scale, 1000, 2, x, y)), 0.5);
+				volcanicActivity = volcanicActivity < -0.8 ? -curve((volcanicActivity + 1) * 5, 1) : 1;
 				
-				int color = getColor(h, tide, humidity, volcanicActivity, renderMode);
+				//int color = getColor(h, tide, humidity, volcanicActivity, renderMode);
+				int color = getColorSimple(elevation, humidity, volcanicActivity, renderMode);
 //				int color = chooseLand(h, tide, humidity, volcanicActivity, renderMode);
 				img.setRGB(localX, localY, color);
 			}
@@ -112,13 +113,19 @@ public class TerrainGenerator {
 	}
 	
 	private double getElevation(int seed, double scale, int x, int y) {
-		double elevation = curve(getNoise(seed, scale, 50, 4, x, y), 1.25);
-		double h = curve(OpenSimplex2.noise3_ImproveXY(seed+1, (x * scale) / 256, (y * scale) / 256, elevation), 0.5);
-		double h2 = curve(OpenSimplex2.noise3_ImproveXY(seed, (x * scale) / 256, (y * scale) / 256, elevation), 1);
-		double k = curve(OpenSimplex2.noise3_ImproveXY(seed+1, (x * scale) / 1024, (y * scale) / 1024, elevation/4), 0.5);
-		double k2 = curve(OpenSimplex2.noise3_ImproveXY(seed, (x * scale) / 1024, (y * scale) / 1024, elevation/4), 1);
+		double elevation = curve(getNoise(seed, scale, 50, 4, x, y), 1);
+		double s1 = curve(OpenSimplex2.noise3_ImproveXY(seed+1, (x * scale) / 256, (y * scale) / 256, elevation), 1);
+		double s2 = curve(OpenSimplex2.noise3_ImproveXY(seed+2, (x * scale) / 256, (y * scale) / 256, elevation), 1);
+		double s = avg(s1, s2);
 		
-		return curve(avg(h, h2, k, k2), 0.5);
+		double elevation2 = curve(getNoise(seed+3, scale, 200, 6, x, y), 0.5);
+		double l1 = curve(OpenSimplex2.noise3_ImproveXY(seed+4, (x * scale) / 1024, (y * scale) / 1024, elevation2), 0.5);
+		double l2 = curve(OpenSimplex2.noise3_ImproveXY(seed+5, (x * scale) / 1024, (y * scale) / 1024, elevation2), 0.5);
+		double l = avg(l1, l2);
+		
+		double e = (avg(elevation, elevation2) + 1) * 0.5; // 0-1
+		
+		return curve(avg(s, l), 0.75 + (e/2));
 	}
 	
 	private int chooseLand(double height, double tide, double humidity, double volcanicActivity, RenderMode renderMode) {
@@ -163,6 +170,52 @@ public class TerrainGenerator {
 			return 0;
 		
 		return 1 - Math.pow(Math.abs(idealPosition - input) / variance, decayCurve);
+	}
+	
+	private int getColorSimple(double height, double humidity, double volcanicActivity, RenderMode renderMode) {
+		if (renderMode == RenderMode.NOISE_ONLY)
+			return 0x010101 * (int)((humidity + 1) * 127.5);
+		
+		double ocean = -1.0;
+//		double water = -0.7 + (humidity * 0.2); // y=0.4(x+0.8)^{0.45}-1
+//		double sand = -0.2 + (humidity * 0.4); // y=0.95(x+0.95)^{0.27}-1
+//		double grass = -0.1 - (humidity * 0.4); // y=-(x+0.95)^{0.15}+1
+//		double forest = 0.4 - (humidity * 0.4); // y=-0.8(x+0.8)^{0.43}+1
+//		double rock = 0.7 + (humidity * 0.3); // y=(x+1.1)^{0.1}
+//		double snow = 0.7 - (humidity * 0.4); // y=-0.6(x+0.3)^{0.1}+1.5
+		
+		double water = 0.2 * Math.pow((humidity+1), 0.3) - 1;
+		double sand = 0.9 * Math.pow((humidity+1), 0.5) - 1;
+		double grass = -1.2 * Math.pow((humidity+1), 0.15)+1.1;
+		double forest = -Math.pow(humidity, 3)+0.35;
+		double rock = 0.8 * Math.pow((humidity+1.1), 0.3);
+		double snow = -0.6 * Math.pow((humidity+0.6), 0.3)+1.4;
+		
+		if (height >= snow)
+			return height < rock 
+					? Land.SNOW.getColor() 
+					: Land.ICE.getColor();
+		
+		if (height >= rock)
+			return Land.ROCK.getColor();
+		
+		if (height >= forest)
+			return height < sand
+					? Land.SWAMP_GRASS.getColor()
+					: Land.FOREST.getColor();
+		
+		if (height >= grass)
+			return height < sand
+					? Land.MUD.getColor()
+					: Land.GRASS.getColor();
+		
+		if (height >= sand)
+			return Land.SAND.getColor();
+		
+		if (height >= water)
+			return Land.WATER.getColor();
+		
+		return Land.OCEAN.getColor();
 	}
 
 	private int getColor(double height, double tide, double humidity, double volcanicActivity, RenderMode renderMode) {
@@ -339,7 +392,7 @@ public class TerrainGenerator {
 	
 	public void loadLandProfiles() throws IOException {
 		ObjectMapper mapper = new ObjectMapper();
-		File from = new File("landProfiles.json");
+		File from = new File("/home/dan/git/terrainGenerator/landProfiles.json");
 		profileRoot = mapper.readTree(from);
 		System.out.println(profileRoot.toPrettyString());
 	}
