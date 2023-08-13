@@ -48,7 +48,7 @@ public class MyPanel extends JPanel {
 	private int WINDOW_WIDTH;
 	private int WINDOW_HEIGHT;
 	private int OUT_OF_BOUNDS_ROWS = 3; // how many rows of images to render outside the current window
-	private final Point origin = new Point(0, 0);
+	private final Point origin = new Point(1000029092, 999995106);
 	private double scale = 1;
 	private double currentScale = scale;
 	private Point mousePt;
@@ -61,8 +61,8 @@ public class MyPanel extends JPanel {
 		WINDOW_WIDTH = windowWidth;
 		WINDOW_HEIGHT = windowHeight;
 		
-		IMAGE_WIDTH = WINDOW_WIDTH / 10;
-		IMAGE_HEIGHT = WINDOW_HEIGHT / 10;
+		IMAGE_WIDTH = WINDOW_WIDTH / 5;
+		IMAGE_HEIGHT = WINDOW_HEIGHT / 5;
 		
 		currentImageWidth = IMAGE_WIDTH;
 		currentImageHeight = IMAGE_HEIGHT;

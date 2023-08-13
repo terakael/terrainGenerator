@@ -84,27 +84,24 @@ public class TerrainGenerator {
 				final int localY = y - top;
 				
 //				double tide = -curve(
-//						avg(getNoise(seed + 4, scale, 1000, 3, x, y),
-//							getNoise(seed + 5, scale, 3000, 3, x, y),
-//							getNoise(seed + 11, scale, 500, 3, x, y)), 1.5);
+//						avg(getNoise(seed + 4, scale, 500, 7, x, y),
+//							getNoise(seed + 5, scale, 1500, 9, x, y),
+//							getNoise(seed + 11, scale, 250, 6, x, y)), 1.5);
 				
 				double elevation = getElevation(seed, scale, x, y);
-//				double humidity = curve(getElevation(seed + 1, scale, x, y), 1.5);
 				
-				double humidity = avg(
-						getNoise(seed + 7, scale, 1200, 1, x, y),
-						getNoise(seed + 7, scale, 600, 1, x, y),
-						getNoise(seed + 8, scale, 1200, 1, x, y));
-				humidity = curve(humidity, 2);
+				double humidity = curve(getElevation(seed + 1, scale/2, x, y), 3);
+				double humidity2 = curve(getElevation(seed + 2, scale/3, x, y), 3);
+				humidity = curve(avg(humidity, humidity2), 0.5);
 
 				double volcanicActivity = curve(
 						avg(getNoise(seed + 9, scale, 1000, 1, x, y),
 							getNoise(seed + 10, scale, 1000, 2, x, y)), 0.5);
 				volcanicActivity = volcanicActivity < -0.8 ? -curve((volcanicActivity + 1) * 5, 1) : 1;
 				
-				//int color = getColor(h, tide, humidity, volcanicActivity, renderMode);
+//				int color = getColor(humidity, tide, humidity, volcanicActivity, renderMode);
 				int color = getColorSimple(elevation, humidity, volcanicActivity, renderMode);
-//				int color = chooseLand(h, tide, humidity, volcanicActivity, renderMode);
+//				int color = chooseLand(elevation, tide, humidity, volcanicActivity, renderMode);
 				img.setRGB(localX, localY, color);
 			}
 		}
@@ -173,49 +170,61 @@ public class TerrainGenerator {
 	}
 	
 	private int getColorSimple(double height, double humidity, double volcanicActivity, RenderMode renderMode) {
+//		height = Math.round(height * 10.0) / 10.0;
+		height = round(height, 1);
+//		humidity = round(humidity, 1);
+		
 		if (renderMode == RenderMode.NOISE_ONLY)
-			return 0x010101 * (int)((humidity + 1) * 127.5);
+			return 0x010101 * (int)((height + 1) * 127.5);
 		
-		double ocean = -1.0;
-//		double water = -0.7 + (humidity * 0.2); // y=0.4(x+0.8)^{0.45}-1
-//		double sand = -0.2 + (humidity * 0.4); // y=0.95(x+0.95)^{0.27}-1
-//		double grass = -0.1 - (humidity * 0.4); // y=-(x+0.95)^{0.15}+1
-//		double forest = 0.4 - (humidity * 0.4); // y=-0.8(x+0.8)^{0.43}+1
-//		double rock = 0.7 + (humidity * 0.3); // y=(x+1.1)^{0.1}
-//		double snow = 0.7 - (humidity * 0.4); // y=-0.6(x+0.3)^{0.1}+1.5
+//		double ocean = -1.0;
+        double water = round(-0.3 * Math.pow(humidity - 1, 2) - 0.3, 1); // y=-0.3(x-1)^{2}-0.3
+        double sand = round(-1 * Math.pow(humidity+1.6, -2) + 0.2, 1); // y=-1(x+1.6)^{-2}+0.2
+        double grass = round(0.5 * Math.pow(humidity - 0.4, 2) - 0.2, 1); // y=0.5(x-0.4)^{2}-0.2
+        double dirt = round(-2 * Math.pow(humidity + 0.8, 3) + 0.5, 1); // y=-2(x+0.8)^{3}+0.5
+        double forest = round(1 * Math.pow((humidity - 0.95), 2) - 0.5, 1); // y=1(x-0.95)^{2}-0.5
+        double rock = round(-2 * Math.pow(humidity + 1, 4), 1); // y=-2(x+1)^{4}
+//		double snow = Math.pow(5 * humidity, 2) - (4.8 * humidity) + 1;
 		
-		double water = 0.2 * Math.pow((humidity+1), 0.3) - 1;
-		double sand = 0.9 * Math.pow((humidity+1), 0.5) - 1;
-		double grass = -1.2 * Math.pow((humidity+1), 0.15)+1.1;
-		double forest = -Math.pow(humidity, 3)+0.35;
-		double rock = 0.8 * Math.pow((humidity+1.1), 0.3);
-		double snow = -0.6 * Math.pow((humidity+0.6), 0.3)+1.4;
+//		if (height >= snow)
+//			return height < rock 
+//					? Land.SNOW.getColor() 
+//					: Land.ICE.getColor();
 		
-		if (height >= snow)
-			return height < rock 
-					? Land.SNOW.getColor() 
-					: Land.ICE.getColor();
+		if (height >= forest) {
+			if (height > sand)
+				return Land.FOREST.getColor();
+			else if (height > grass)
+				return Land.SWAMP_GRASS.getColor();
+			else
+				return Land.SWAMP_WATER.getColor();
+		}
 		
-		if (height >= rock)
-			return Land.ROCK.getColor();
+		if (height >= grass) {
+			if (height < sand)
+				return Land.MUD.getColor();
+			else if (height < dirt)
+				return Land.DIRT.getColor();
+			else
+				return Land.GRASS.getColor();
+		}
 		
-		if (height >= forest)
-			return height < sand
-					? Land.SWAMP_GRASS.getColor()
-					: Land.FOREST.getColor();
-		
-		if (height >= grass)
-			return height < sand
-					? Land.MUD.getColor()
-					: Land.GRASS.getColor();
-		
-		if (height >= sand)
-			return Land.SAND.getColor();
+		if (height >= sand) {
+			if (height < rock)
+				return Land.ROCK.getColor();
+			else
+				return Land.SAND.getColor();
+		}
 		
 		if (height >= water)
 			return Land.WATER.getColor();
 		
 		return Land.OCEAN.getColor();
+	}
+	
+	private double round(double num, int dp) {
+		final double mult = Math.pow(10, dp);
+		return Math.round(num * mult) / mult;
 	}
 
 	private int getColor(double height, double tide, double humidity, double volcanicActivity, RenderMode renderMode) {
